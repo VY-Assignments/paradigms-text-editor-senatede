@@ -8,6 +8,8 @@ TextEditor::TextEditor(const uint32_t INITIAL_BUFFER_SIZE, const uint32_t INITIA
     RowCount = INITIAL_ROW_COUNT;
     text = static_cast<char **>(calloc(RowCount, sizeof(char *)));
     text[LastLine] = static_cast<char *>(calloc(1, sizeof(char)));
+    Cursor.first = Cursor.second = 0;
+    Text Clipboard;
 }
 TextEditor::~TextEditor() {
     cleanup();
@@ -52,6 +54,11 @@ void TextEditor::print_help() {
            " -1 → Exit\n"
            " -2 → Help\n");
 }
+void TextEditor::set_cursor(const int row, const int col) {
+    Cursor.first = row;
+    Cursor.second = col;
+}
+
 void TextEditor::add_text(const Text& temp) const {
     const uint32_t new_len = strlen(text[LastLine]) + strlen(temp) + 1;
     text[LastLine] = static_cast<char *>(realloc(text[LastLine], new_len * sizeof(char))); // reallocating memory for new line length
@@ -112,7 +119,8 @@ int TextEditor::load_from_file(const Text& file_name) {
 void TextEditor::print_text() const {
     for (int i = 0; i <= LastLine; i++) printf("%s\n", text[i]);
 }
-void TextEditor::insert_text(const int row, const int col, const Text& temp, const bool replacement) {
+void TextEditor::insert_text(const Text& temp, const bool replacement) {
+    const int row = Cursor.first; const int col = Cursor.second;
     if (row > LastLine) {
         if (row >= RowCount) {
             RowCount = row + 1; // changing the number of lines
@@ -160,7 +168,8 @@ std::vector<std::pair<int, int>> TextEditor::substring_search(const Text& temp) 
     }
     return matches;
 }
-int TextEditor::delete_text(const int row, const int col, const int number) const {
+int TextEditor::delete_text(const int number) const {
+    const int row = Cursor.first; const int col = Cursor.second;
     const uint8_t old_len = strlen(text[row]);
     if (row > LastLine || col > old_len) return 1;
 
@@ -168,4 +177,19 @@ int TextEditor::delete_text(const int row, const int col, const int number) cons
     const uint8_t new_len = (col > old_len - number) ? col: old_len - number;
     text[row] = static_cast<char *>(realloc(text[row], new_len));
     return 0;
+}
+int TextEditor::copy(int number) {
+    const int row = Cursor.first; const int col = Cursor.second;
+    if (row > LastLine || col >= strlen(text[row])) return 1;
+    char* temp = static_cast<char*>(calloc(number + 1, sizeof(char)));
+    for (int i = 0; i < number & i < strlen(text[row]) - col; i++) temp[i] = text[row][col+i];
+    Clipboard.text = temp;
+    return 0;
+}
+int TextEditor::cut(int number) {
+    if (copy(number)) return 1;
+    return delete_text(number);
+}
+void TextEditor::paste() {
+    insert_text(Clipboard, false);
 }

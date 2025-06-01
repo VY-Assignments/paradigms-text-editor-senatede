@@ -3,6 +3,7 @@
 class Text {
 public:
     char* text;
+    Text() {text = NULL;}
     explicit Text (char* string) {
         text = string;
     }

@@ -8,7 +8,6 @@ int main() {
         int command = text_editor.command_input();
         system("clear"); // Clearing console
         int row, col, number;
-        std::vector<std::pair<int, int>> matches;
 
         switch (command) {
             case 1:
@@ -37,11 +36,12 @@ int main() {
                     break;
                 }
                 printf("Enter text to insert: ");
-                text_editor.insert_text(row, col, text_editor.console_input(), false);
+                text_editor.set_cursor(row, col);
+                text_editor.insert_text(text_editor.console_input(), false);
                 break;
             case 7:
                 printf("Enter text to search: ");
-
+                std::vector<std::pair<int, int>> matches;
                 matches = text_editor.substring_search(Text(text_editor.console_input()));
                 printf("Text is present in this positions: ");
                 for (const auto& p : matches) {
@@ -51,11 +51,41 @@ int main() {
                 break;
             case 8:
                 printf("Choose line, index and number of symbols: ");
-                if (sscanf("%d %d %d", text_editor.console_input(), &row, &col, &number) != 3 || row < 0 || col < 0 || number < 0) {
+                if (sscanf(text_editor.console_input(), "%d %d %d", &row, &col, &number) != 3 || row < 0 || col < 0 || number < 0) {
                     printf("Invalid input.\n");
                     break;
                 }
-                if (text_editor.delete_text(row, col, number)) printf("Nothing to delete.\n");
+                text_editor.set_cursor(row, col);
+                if (text_editor.delete_text(number)) printf("Nothing to delete.\n");
+                break;
+            case 11:
+                printf("Choose line and index and number of symbols: ");
+                if (sscanf(text_editor.console_input(), "%d %d %d", &row, &col, &number) != 3 || row < 0 || col < 0 || number < 0) {
+                    printf("Invalid input.\n");
+                    break;
+                }
+                text_editor.set_cursor(row, col);
+                if (text_editor.cut(number)) printf("Nothing to cut.\n");
+                else printf("Cut.\n");
+                break;
+            case 12:
+                printf("Choose line and index: ");
+                if (sscanf(text_editor.console_input(), "%d %d", &row, &col) != 2  || row < 0 || col < 0) {
+                    printf("Invalid input.\n");
+                    break;
+                }
+                text_editor.set_cursor(row, col);
+                text_editor.paste();
+                break;
+            case 13:
+                printf("Choose line and index and number of symbols: ");
+                if (sscanf(text_editor.console_input(), "%d %d %d", &row, &col, &number) != 3 || row < 0 || col < 0 || number < 0) {
+                    printf("Invalid input.\n");
+                    break;
+                }
+                text_editor.set_cursor(row, col);
+                if (text_editor.copy(number)) printf("Nothing to copy.\n");
+                else printf("Copied.\n");
                 break;
             case 14: printf("Choose line and index: ");
                 if (sscanf(text_editor.console_input(), "%d %d", &row, &col) != 2  || row < 0 || col < 0) {
@@ -63,7 +93,8 @@ int main() {
                     break;
                 }
                 printf("Enter text to insert: ");
-                text_editor.insert_text(row, col, text_editor.console_input(), true);
+                text_editor.set_cursor(row, col);
+                text_editor.insert_text(text_editor.console_input(), true);
                 break;
             case -1: printf("Exiting.."); return 0;
             case -2: TextEditor::print_help(); break;
