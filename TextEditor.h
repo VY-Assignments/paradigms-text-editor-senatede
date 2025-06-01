@@ -2,6 +2,8 @@
 #define TEXTEDITOR_H
 
 #include <cstdlib>
+#include <iostream>
+#include <Text.cpp>
 
 class TextEditor {
 public:
@@ -9,18 +11,18 @@ public:
     ~TextEditor();
 
     int command_input() const;
-
+    Text console_input() const;
     static void print_help();
-    void add_text() const;
+    void add_text(const Text& temp) const;
     void new_line();
-    void save_to_file() const;
-    void load_from_file();
+    int save_to_file(const Text& file_name) const;
+    int load_from_file(const Text& file_name);
     void print_text() const;
-    void insert_text();
-    void substring_search() const;
+    void insert_text(int row, int col, const Text& temp, bool replacement);
+    std::vector<std::pair<int, int>> substring_search(const Text& temp) const;
+    int delete_text(int row, int col, int number) const;
 
 private:
-    char* console_input() const;
     void cleanup() const;
 
     char** text;

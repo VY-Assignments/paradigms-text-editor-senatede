@@ -20,7 +20,7 @@ void TextEditor::cleanup() const {
         free(text);
     }
 }
-char* TextEditor::console_input() const { // Text input
+Text TextEditor::console_input() const { // Text input
     uint32_t size = BufferSize;
     uint32_t len = 0;
     char* buffer = static_cast<char *>(calloc(size, sizeof(char)));
@@ -33,13 +33,11 @@ char* TextEditor::console_input() const { // Text input
         }
     }
     buffer[len] = '\0';
-    return buffer;
+    return Text(buffer);
 }
 int TextEditor::command_input() const {
     printf("Choose the command:\n");
-    char* command = console_input();
-    const int cmd = std::atoi(command);
-    free(command);
+    const int cmd = std::atoi(console_input());
     return cmd;
 }
 void TextEditor::print_help() {
@@ -54,15 +52,10 @@ void TextEditor::print_help() {
            " -1 → Exit\n"
            " -2 → Help\n");
 }
-void TextEditor::add_text() const {
-    printf("Enter text to append: ");
-    char* str = console_input();
-    if (text[LastLine] != NULL) {
-        uint32_t new_len = strlen(text[LastLine]) + strlen(str) + 1;
-        text[LastLine] = static_cast<char *>(realloc(text[LastLine], new_len * sizeof(char))); // reallocating memory for new line length
-    }
-    strcat(text[LastLine], str);
-    free(str);
+void TextEditor::add_text(const Text& temp) const {
+    const uint32_t new_len = strlen(text[LastLine]) + strlen(temp) + 1;
+    text[LastLine] = static_cast<char *>(realloc(text[LastLine], new_len * sizeof(char))); // reallocating memory for new line length
+    strcat(text[LastLine], temp);
 }
 void TextEditor::new_line() {
     if (LastLine >= RowCount) {
@@ -71,81 +64,55 @@ void TextEditor::new_line() {
     }
     LastLine++;
     text[LastLine] = static_cast<char *>(calloc(1, sizeof(char)));
-    printf("New line is started\n");
 }
-void TextEditor::save_to_file() const {
-    printf("Enter the file name for saving: ");
-    char *file_name = console_input();
+int TextEditor::save_to_file(const Text& file_name) const {
     FILE* file = fopen(file_name, "w");
-    if (file != NULL) {
-        for (int i = 0; i <= LastLine; i++) fprintf(file, (i != LastLine) ? "%s\n" : "%s", text[i]);
-        fclose(file);
-        printf("Text has been saved successfully\n");
-        free(file_name);
-    }
-    else {
-        printf("File name cannot be empty.\n");
-    }
+    if (file == NULL) return 1;
+    for (int i = 0; i <= LastLine; i++) fprintf(file, (i != LastLine) ? "%s\n" : "%s", text[i]);
+    fclose(file);
+    return 0;
 }
-void TextEditor::load_from_file() {
-    printf("Enter the file name for loading: ");
-    char* file_name = console_input();
+int TextEditor::load_from_file(const Text& file_name) {
     FILE* file = fopen(file_name, "r");
-    if (file == NULL) {
-        printf("Error opening file\n");
-    }
-    else {
-        cleanup();
-        LastLine = 0;
-        RowCount = 10;
-        text = static_cast<char **>(calloc(RowCount, sizeof(char *)));
-        char c;
-        uint32_t LineLength = 0; uint32_t size = BufferSize;
-        char* buffer = static_cast<char *>(calloc(size, sizeof(char)));
+    if (file == NULL) return 1;
+    cleanup();
+    LastLine = 0;
+    RowCount = 10;
+    text = static_cast<char **>(calloc(RowCount, sizeof(char *)));
+    char c;
+    uint32_t LineLength = 0; uint32_t size = BufferSize;
+    char* buffer = static_cast<char *>(calloc(size, sizeof(char)));
 
-        while ((c = fgetc(file)) != EOF) {
-            if (c != '\n') {
-                buffer[LineLength++] = c;
-                if (LineLength == size) {
-                    size *= 2; // doubling size of bugger
-                    buffer = static_cast<char *>(realloc(buffer, size));
-                }
-            }
-            else {
-                buffer = static_cast<char *>(realloc(buffer, LineLength));
-                text[LastLine] = strdup(buffer);
-
-                free(buffer), buffer = static_cast<char *>(calloc(size, sizeof(char)));
-
-                size = BufferSize; LineLength = 0;
-                if (LastLine >= RowCount-1) {
-                    RowCount *= 2; // doubling the number of lines
-                    text = static_cast<char **>(realloc(text, RowCount * sizeof(char *)));
-                }
-                LastLine++;
+    while ((c = fgetc(file)) != EOF) {
+        if (c != '\n') {
+            buffer[LineLength++] = c;
+            if (LineLength == size) {
+                size *= 2; // doubling size of bugger
+                buffer = static_cast<char *>(realloc(buffer, size));
             }
         }
-        text[LastLine] = strdup(buffer);
+        else {
+            buffer = static_cast<char *>(realloc(buffer, LineLength));
+            text[LastLine] = strdup(buffer);
 
-        free(buffer);
-        printf("Text has been loaded successfully\n");
+            free(buffer), buffer = static_cast<char *>(calloc(size, sizeof(char)));
+
+            size = BufferSize; LineLength = 0;
+            if (LastLine >= RowCount-1) {
+                RowCount *= 2; // doubling the number of lines
+                text = static_cast<char **>(realloc(text, RowCount * sizeof(char *)));
+            }
+            LastLine++;
+        }
     }
-    free(file_name);
+    text[LastLine] = strdup(buffer);
+    free(buffer);
+    return 0;
 }
 void TextEditor::print_text() const {
     for (int i = 0; i <= LastLine; i++) printf("%s\n", text[i]);
 }
-void TextEditor::insert_text() {
-    int row, col;
-    printf("Choose line and index: ");
-    if (scanf("%d %d", &row, &col) != 2 || row < 0 || col < 0) {
-        printf("Invalid input.\n");
-        while (getchar() != '\n');
-        return;
-    }
-    while (getchar() != '\n'); // clearing console buffer
-    printf("Enter text to insert: ");
-    char* str = console_input();
+void TextEditor::insert_text(const int row, const int col, const Text& temp, const bool replacement) {
     if (row > LastLine) {
         if (row >= RowCount) {
             RowCount = row + 1; // changing the number of lines
@@ -154,39 +121,35 @@ void TextEditor::insert_text() {
         for (uint32_t i = LastLine+1; i < row; i++) { // creating empty lines between last one and the one we want
             text[i] = static_cast<char *>(calloc(1, sizeof(char)));
         }
-        text[row] = static_cast<char *>(calloc(col + strlen(str) + 1, sizeof(char)));
+        text[row] = static_cast<char *>(calloc(col + strlen(temp) + 1, sizeof(char)));
         for (int i = 0; i < col; i++) text[row][i] = ' '; // fitting spaces
-        strcat(text[row], str);
+        strcat(text[row], temp);
         LastLine = row;
     }
     else {
-        uint32_t new_len = (col > strlen(text[row])) ? col + strlen(str) + 1: strlen(text[row]) + strlen(str) + 1;
+        uint32_t new_len = (col > strlen(text[row])) ? col + strlen(temp) + 1: strlen(text[row]) + strlen(temp) + 1;
         text[row] = static_cast<char *>(realloc(text[row], new_len)); // reallocating for new len
-        for (uint32_t i = strlen(text[row]); i > col; i--) text[row][i-1+strlen(str)] = text[row][i-1]; // moving characters after index to the right
+        if (!replacement)for (uint32_t i = strlen(text[row]); i > col; i--) text[row][i-1+strlen(temp)] = text[row][i-1]; // moving characters after index to the right
         for (uint32_t i = strlen(text[row]); i < col; i++) text[row][i] = ' '; // if index is > than len of the line we fit empty space with spaces
-        for (int i = 0; i < strlen(str); i++) text[row][col+i] = str[i];
+        for (int i = 0; i < strlen(temp); i++) text[row][col+i] = temp[i];
     }
-    free(str);
 }
-void TextEditor::substring_search() const {
-    printf("Enter text to search: ");
-    char* str = console_input();
+std::vector<std::pair<int, int>> TextEditor::substring_search(const Text& temp) const {
     int row_index = 0; int col_index = 0;
     int match_count = 0;
-    int matches = 0;
-    printf("Text is present in this positions: ");
+    std::vector<std::pair<int, int>> matches;
+
     for (int row = 0; row <= LastLine; row++) {
         for (int index = 0; index < strlen(text[row]); index++) {
-            if (text[row][index] == str[match_count]) {
+            if (text[row][index] == temp[match_count]) {
                 if (match_count == 0) { // if it's the first match we set the index of the start
                     row_index = row;
                     col_index = index;
                 }
                 match_count++;
-                if (match_count == strlen(str)) { // if the match_count == len of substring then we found a match
-                    printf("%d %d; ", row_index, col_index);
+                if (match_count == strlen(temp)) { // if the match_count == len of substring then we found a match
+                    matches.emplace_back(row_index, col_index);
                     row_index = col_index = match_count = 0;
-                    matches++;
                 }
             }
             else {
@@ -195,6 +158,14 @@ void TextEditor::substring_search() const {
             }
         }
     }
-    printf("\nTotal matches: %d\n", matches);
-    free(str);
+    return matches;
+}
+int TextEditor::delete_text(const int row, const int col, const int number) const {
+    const uint8_t old_len = strlen(text[row]);
+    if (row > LastLine || col > old_len) return 1;
+
+    for (size_t i = col; i < old_len; i++) text[row][i] = (i+number < old_len) ?  text[row][i+number] : '\0';
+    const uint8_t new_len = (col > old_len - number) ? col: old_len - number;
+    text[row] = static_cast<char *>(realloc(text[row], new_len));
+    return 0;
 }
