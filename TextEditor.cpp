@@ -10,6 +10,8 @@ TextEditor::TextEditor(const uint32_t INITIAL_BUFFER_SIZE, const uint32_t INITIA
     text[LastLine] = static_cast<char *>(calloc(1, sizeof(char)));
     Cursor.first = Cursor.second = 0;
     Text Clipboard;
+    TextStateStack UndoStack;
+    TextStateStack RedoStack;
 }
 TextEditor::~TextEditor() {
     cleanup();
@@ -51,6 +53,13 @@ void TextEditor::print_help() {
            "  5 → Print the current text to console\n"
            "  6 → Insert the text by line and symbol index\n"
            "  7 → Search substring\n"
+           "  8 → Delete part of text\n"
+           "  9 → Undo\n"
+           " 10 → Redo\n"
+           " 11 → Cut\n"
+           " 12 → Paste\n"
+           " 13 → Copy\n"
+           " 14 → Insert and replace\n"
            " -1 → Exit\n"
            " -2 → Help\n");
 }
@@ -59,12 +68,16 @@ void TextEditor::set_cursor(const int row, const int col) {
     Cursor.second = col;
 }
 
-void TextEditor::add_text(const Text& temp) const {
+void TextEditor::add_text(const Text& temp) {
+    UndoStack.push(text, RowCount, LastLine);
+    RedoStack.clear();
     const uint32_t new_len = strlen(text[LastLine]) + strlen(temp) + 1;
     text[LastLine] = static_cast<char *>(realloc(text[LastLine], new_len * sizeof(char))); // reallocating memory for new line length
     strcat(text[LastLine], temp);
 }
 void TextEditor::new_line() {
+    UndoStack.push(text, RowCount, LastLine);
+    RedoStack.clear();
     if (LastLine >= RowCount) {
         RowCount *= 2; // doubling number of rows
         text = static_cast<char **>(realloc(text, RowCount * sizeof(char *)));
@@ -72,7 +85,9 @@ void TextEditor::new_line() {
     LastLine++;
     text[LastLine] = static_cast<char *>(calloc(1, sizeof(char)));
 }
-int TextEditor::save_to_file(const Text& file_name) const {
+int TextEditor::save_to_file(const Text& file_name) {
+    UndoStack.clear();
+    RedoStack.clear();
     FILE* file = fopen(file_name, "w");
     if (file == NULL) return 1;
     for (int i = 0; i <= LastLine; i++) fprintf(file, (i != LastLine) ? "%s\n" : "%s", text[i]);
@@ -80,6 +95,8 @@ int TextEditor::save_to_file(const Text& file_name) const {
     return 0;
 }
 int TextEditor::load_from_file(const Text& file_name) {
+    UndoStack.clear();
+    RedoStack.clear();
     FILE* file = fopen(file_name, "r");
     if (file == NULL) return 1;
     cleanup();
@@ -120,6 +137,8 @@ void TextEditor::print_text() const {
     for (int i = 0; i <= LastLine; i++) printf("%s\n", text[i]);
 }
 void TextEditor::insert_text(const Text& temp, const bool replacement) {
+    UndoStack.push(text, RowCount, LastLine);
+    RedoStack.clear();
     const int row = Cursor.first; const int col = Cursor.second;
     if (row > LastLine) {
         if (row >= RowCount) {
@@ -142,7 +161,7 @@ void TextEditor::insert_text(const Text& temp, const bool replacement) {
         for (int i = 0; i < strlen(temp); i++) text[row][col+i] = temp[i];
     }
 }
-std::vector<std::pair<int, int>> TextEditor::substring_search(const Text& temp) const {
+std::vector<std::pair<int, int>> TextEditor::substring_search(const Text& temp) {
     int row_index = 0; int col_index = 0;
     int match_count = 0;
     std::vector<std::pair<int, int>> matches;
@@ -168,7 +187,9 @@ std::vector<std::pair<int, int>> TextEditor::substring_search(const Text& temp) 
     }
     return matches;
 }
-int TextEditor::delete_text(const int number) const {
+int TextEditor::delete_text(const int number) {
+    UndoStack.push(text, RowCount, LastLine);
+    RedoStack.clear();
     const int row = Cursor.first; const int col = Cursor.second;
     const uint8_t old_len = strlen(text[row]);
     if (row > LastLine || col > old_len) return 1;
@@ -178,7 +199,7 @@ int TextEditor::delete_text(const int number) const {
     text[row] = static_cast<char *>(realloc(text[row], new_len));
     return 0;
 }
-int TextEditor::copy(int number) {
+int TextEditor::copy(const int number) {
     const int row = Cursor.first; const int col = Cursor.second;
     if (row > LastLine || col >= strlen(text[row])) return 1;
     char* temp = static_cast<char*>(calloc(number + 1, sizeof(char)));
@@ -186,10 +207,32 @@ int TextEditor::copy(int number) {
     Clipboard.text = temp;
     return 0;
 }
-int TextEditor::cut(int number) {
+int TextEditor::cut(const int number) {
     if (copy(number)) return 1;
     return delete_text(number);
 }
 void TextEditor::paste() {
     insert_text(Clipboard, false);
+}
+int TextEditor::undo() {
+    if (UndoStack.is_empty()) return 1;
+    RedoStack.push(text, RowCount, LastLine);
+    cleanup();
+    TextState textState = UndoStack.pop();
+    RowCount = textState.RowCount;
+    LastLine = textState.LastLine;
+    text = static_cast<char **>(calloc(RowCount, sizeof(char *)));
+    for (int i = 0; i <= LastLine; i++) text[i] = strdup(textState.text[i]);
+    return 0;
+}
+int TextEditor::redo() {
+    if (RedoStack.is_empty()) return 1;
+    UndoStack.push(text, RowCount, LastLine);
+    cleanup();
+    TextState textState = RedoStack.pop();
+    RowCount = textState.RowCount;
+    LastLine = textState.LastLine;
+    text = static_cast<char **>(calloc(RowCount, sizeof(char *)));
+    for (int i = 0; i <= LastLine; i++) text[i] = strdup(textState.text[i]);
+    return 0;
 }

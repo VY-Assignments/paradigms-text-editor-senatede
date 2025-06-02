@@ -39,16 +39,16 @@ int main() {
                 text_editor.set_cursor(row, col);
                 text_editor.insert_text(text_editor.console_input(), false);
                 break;
-            case 7:
+            case 7: {
                 printf("Enter text to search: ");
-                std::vector<std::pair<int, int>> matches;
-                matches = text_editor.substring_search(Text(text_editor.console_input()));
+                std::vector<std::pair<int, int>> matches = text_editor.substring_search(Text(text_editor.console_input()));
                 printf("Text is present in this positions: ");
                 for (const auto& p : matches) {
                     printf("%d %d; ", p.first, p.second);
                 }
                 printf("\nTotal matches: %lu\n", matches.size());
                 break;
+            }
             case 8:
                 printf("Choose line, index and number of symbols: ");
                 if (sscanf(text_editor.console_input(), "%d %d %d", &row, &col, &number) != 3 || row < 0 || col < 0 || number < 0) {
@@ -57,6 +57,14 @@ int main() {
                 }
                 text_editor.set_cursor(row, col);
                 if (text_editor.delete_text(number)) printf("Nothing to delete.\n");
+                break;
+            case 9:
+                if (text_editor.undo()) printf("Noting to undo.\n");
+                else printf("Undid.\n");
+                break;
+            case 10:
+                if (text_editor.redo()) printf("Nothing to redo.\n");
+                else printf("Redid.\n");
                 break;
             case 11:
                 printf("Choose line and index and number of symbols: ");
