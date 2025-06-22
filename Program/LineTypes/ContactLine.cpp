@@ -1,9 +1,12 @@
 #include "Line.h"
 
 class ContactLine final : public Line {
+    String ContactKeyWord = String("Contact");
+    String EmailKeyWord = String("E-mail");
     String name, surname, email;
 public:
     ContactLine(const String& n, const String& s, const String& e) : name(n), surname(s), email(e) {}
+    ContactLine(const String& ckn, const String& n, const String& s, const String& ekn, const String& e) : ContactKeyWord(ckn), EmailKeyWord(ekn), name(n), surname(s), email(e) {}
     ContactLine(const ContactLine& other) {
         name = other.name;
         surname = other.surname;
@@ -26,6 +29,20 @@ public:
     char* copy_text(int pos, int number) override {return nullptr;}
     int change_state() override { return 1; }
     void print() const override {
-        printf("Contact - %s %s, E-mail: %s\n", name.c_str(), surname.c_str(), email.c_str());
+        printf("%s - %s %s, %s: %s\n", ContactKeyWord.c_str(), name.c_str(), surname.c_str(), EmailKeyWord.c_str(), email.c_str());
+    }
+    String serialize() override {
+        char* temp = new char[12 + 7 + 1 + name.len() + 1 + surname.len() + 6 + 1 + email.len() + 1];
+        strcat(temp, "ContactLine\n");
+        strcat(temp, ContactKeyWord.c_str());
+        strcat(temp, "\n");
+        strcat(temp, name);
+        strcat(temp, "\n");
+        strcat(temp, surname);
+        strcat(temp, "\n");
+        strcat(temp, EmailKeyWord.c_str());
+        strcat(temp, "\n");
+        strcat(temp, email);
+        return String(temp);
     }
 };

@@ -13,4 +13,7 @@ public:
     char* copy_text(int pos, int number) override {return nullptr;}
     int change_state() override { return 1; }
     void print() const override { printf("\n"); }
+    String serialize() override {
+        return {};
+    }
 };

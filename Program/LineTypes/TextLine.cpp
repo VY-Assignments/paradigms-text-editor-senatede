@@ -1,6 +1,7 @@
 #include "Line.h"
 
 class TextLine final : public Line {
+    String TextKeyWord = String("Text");
     char* text;
     uint32_t len;
     public:
@@ -10,6 +11,12 @@ class TextLine final : public Line {
         len = 0;
     }
     explicit TextLine(const String& temp) {
+        len = strlen(temp);
+        text = static_cast<char*>(calloc(len + 1, sizeof(char)));
+        strcpy(text, temp);
+    }
+    explicit TextLine(const String& temp, const String& textKeyWord) {
+        TextKeyWord = textKeyWord;
         len = strlen(temp);
         text = static_cast<char*>(calloc(len + 1, sizeof(char)));
         strcpy(text, temp);
@@ -81,5 +88,14 @@ class TextLine final : public Line {
         return temp;
     }
     int change_state() override { return 1; }
-    void print() const override { printf("Text: %s\n", text); }
+    void print() const override { printf("%s: %s\n", TextKeyWord.c_str(), text); }
+    String serialize() override {
+        auto temp = new char[9 + 4 + 1 + len + 1];
+        temp[0] = '\0';
+        strcat(temp, "TextLine\n");
+        strcat(temp, TextKeyWord.c_str());
+        strcat(temp, "\n");
+        strcat(temp, text);
+        return String(temp);
+    }
 };

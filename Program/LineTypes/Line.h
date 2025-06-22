@@ -14,4 +14,5 @@ public:
     virtual int change_state() = 0;
     virtual Line* clone() const = 0;
     virtual ~Line() = default;
+    virtual String serialize() = 0;
 };

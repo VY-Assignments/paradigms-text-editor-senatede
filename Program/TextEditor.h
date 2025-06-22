@@ -36,8 +36,8 @@ public:
 
 private:
     void cleanup() const;
+    String get_line(FILE* file) const;
 
-    // char** text;
     Line** lines;
     uint32_t BufferSize;
     uint32_t RowCount;

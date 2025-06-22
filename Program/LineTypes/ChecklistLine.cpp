@@ -30,4 +30,12 @@ public:
     void print() const override {
         printf("[ %c ] %s\n", (checked ? 'x' : ' '), item.c_str());
     };
+    String serialize() override {
+        char* temp = new char[14 + 1 + 1 + item.len() + 1];
+        strcat(temp, "ChecklistLine\n");
+        strcat(temp, checked ? "1" : "0");
+        strcat(temp, "\n");
+        strcat(temp, item);
+        return String(temp);
+    }
 };

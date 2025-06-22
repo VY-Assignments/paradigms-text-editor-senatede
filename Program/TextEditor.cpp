@@ -101,49 +101,66 @@ void TextEditor::new_line() {
 int TextEditor::save_to_file(const String& file_name) {
     UndoStack.clear();
     RedoStack.clear();
-    // FILE* file = fopen(file_name, "w");
-    // if (file == NULL) return 1;
-    // for (int i = 0; i <= LastLine; i++) fprintf(file, (i != LastLine) ? "%s\n" : "%s", text[i]);
-    // fclose(file);
+    FILE* file = fopen(file_name, "w");
+    if (file == NULL) return 1;
+    for (int i = 0; i <= LastLine; i++) fprintf(file, "%s\n", lines[i]->serialize().c_str());
+    fclose(file);
     return 0;
+}
+String TextEditor::get_line(FILE* file) const {
+    char c;
+    uint32_t LineLength = 0; uint32_t size = BufferSize;
+    char* buffer = static_cast<char *>(calloc(size, sizeof(char)));
+    while ((c = fgetc(file)) != EOF) {
+        if (c != '\n') {
+            buffer[LineLength++] = c;
+            if (LineLength == size) {
+                size *= 2; // doubling size of bugger
+                buffer = static_cast<char *>(realloc(buffer, size));
+            }
+        }
+        else return String(buffer);
+    }
+    return String("EOF");
 }
 int TextEditor::load_from_file(const String& file_name) {
     UndoStack.clear();
     RedoStack.clear();
-    // FILE* file = fopen(file_name, "r");
-    // if (file == NULL) return 1;
-    // cleanup();
-    // LastLine = 0;
-    // RowCount = 10;
-    // text = static_cast<char **>(calloc(RowCount, sizeof(char *)));
-    // char c;
-    // uint32_t LineLength = 0; uint32_t size = BufferSize;
-    // char* buffer = static_cast<char *>(calloc(size, sizeof(char)));
-    //
-    // while ((c = fgetc(file)) != EOF) {
-    //     if (c != '\n') {
-    //         buffer[LineLength++] = c;
-    //         if (LineLength == size) {
-    //             size *= 2; // doubling size of bugger
-    //             buffer = static_cast<char *>(realloc(buffer, size));
-    //         }
-    //     }
-    //     else {
-    //         buffer = static_cast<char *>(realloc(buffer, LineLength));
-    //         text[LastLine] = strdup(buffer);
-    //
-    //         free(buffer), buffer = static_cast<char *>(calloc(size, sizeof(char)));
-    //
-    //         size = BufferSize; LineLength = 0;
-    //         if (LastLine >= RowCount-1) {
-    //             RowCount *= 2; // doubling the number of lines
-    //             text = static_cast<char **>(realloc(text, RowCount * sizeof(char *)));
-    //         }
-    //         LastLine++;
-    //     }
-    // }
-    // text[LastLine] = strdup(buffer);
-    // free(buffer);
+    FILE* file = fopen(file_name, "r");
+    if (file == NULL) return 1;
+    cleanup();
+    LastLine = 0;
+    RowCount = 10;
+    lines = static_cast<Line **>(calloc(RowCount, sizeof(Line *)));
+    String line = get_line(file);
+    while (!(line == "EOF")) {
+        if (line == "TextLine") {
+            String TextKeyWord = get_line(file);
+            String text = get_line(file);
+            lines[LastLine++] = new TextLine(text, TextKeyWord);
+        }
+        else if (line == "ChecklistLine") {
+            const bool checked = get_line(file) == "1";
+            String item = get_line(file);
+            lines[LastLine++] = new ChecklistLine(item, checked);
+        }
+        else if (line == "ContactLine") {
+            String ContactKeyWord = get_line(file);
+            String name = get_line(file);
+            String surname = get_line(file);
+            String EmailKeyWord = get_line(file);
+            String email = get_line(file);
+            lines[LastLine++] = new ContactLine(ContactKeyWord, name, surname, EmailKeyWord, email);
+        }
+        else lines[LastLine++] = new EmptyLine();
+
+        if (LastLine >= RowCount-1) {
+            RowCount *= 2; // doubling the number of lines
+            lines = static_cast<Line **>(realloc(line, RowCount * sizeof(Line *)));
+        }
+        line = get_line(file);
+    }
+    LastLine--;
     return 0;
 }
 void TextEditor::print_text() const {

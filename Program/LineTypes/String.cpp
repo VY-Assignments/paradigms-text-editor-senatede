@@ -4,9 +4,13 @@
 class String {
 public:
     char* text;
-    String() {text = NULL;};
-    explicit String (char* string) {
-        text = string;
+    String() {text = static_cast<char*>(calloc(1, sizeof(char)));}
+    String (char* string) {
+        if (string != nullptr) {
+            text = static_cast<char*>(calloc(strlen(string) + 1, sizeof(char)));
+            strcpy(text, string);
+        }
+        else text = nullptr;
     }
     String(const String& other) {
         text = static_cast<char*>(calloc(other.len() + 1, sizeof(char)));
@@ -19,8 +23,11 @@ public:
         strcpy(text, other.text);
         return *this;
     }
+    bool operator==(const char* other) const {
+        return strcmp(text, other) == 0;
+    }
     ~String(){
-        free(text);
+        if (text != nullptr) free(text);
     }
     operator char*() const{
         return text;
