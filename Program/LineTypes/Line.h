@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "String.cpp"
+#include "../Caesar/CaesarCipher.h"
 
 class Line {
 public:
@@ -15,4 +16,6 @@ public:
     virtual Line* clone() const = 0;
     virtual ~Line() = default;
     virtual String serialize() = 0;
+    virtual void encrypt(int key) = 0;
+    virtual void decrypt(int key) = 0;
 };

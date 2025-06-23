@@ -8,12 +8,16 @@ public:
     ContactLine(const String& n, const String& s, const String& e) : name(n), surname(s), email(e) {}
     ContactLine(const String& ckn, const String& n, const String& s, const String& ekn, const String& e) : ContactKeyWord(ckn), EmailKeyWord(ekn), name(n), surname(s), email(e) {}
     ContactLine(const ContactLine& other) {
+        ContactKeyWord = other.ContactKeyWord;
+        EmailKeyWord = other.EmailKeyWord;
         name = other.name;
         surname = other.surname;
         email = other.email;
     }
     ContactLine& operator=(const ContactLine& other) {
         if (this == &other) return *this;
+        ContactKeyWord = other.ContactKeyWord;
+        EmailKeyWord = other.EmailKeyWord;
         name = other.name;
         surname = other.surname;
         email = other.email;
@@ -43,6 +47,20 @@ public:
         strcat(temp, EmailKeyWord.c_str());
         strcat(temp, "\n");
         strcat(temp, email);
-        return String(temp);
+        return {temp};
+    }
+    void encrypt(const int key) override {
+        ContactKeyWord = CaesarCipher::encrypt(ContactKeyWord, key);
+        EmailKeyWord = CaesarCipher::encrypt(EmailKeyWord, key);
+        name = CaesarCipher::encrypt(name, key);
+        surname = CaesarCipher::encrypt(surname, key);
+        email = CaesarCipher::encrypt(email, key);
+    }
+    void decrypt(const int key) override {
+        ContactKeyWord = CaesarCipher::decrypt(ContactKeyWord, key);
+        EmailKeyWord = CaesarCipher::decrypt(EmailKeyWord, key);
+        name = CaesarCipher::decrypt(name, key);
+        surname = CaesarCipher::decrypt(surname, key);
+        email = CaesarCipher::decrypt(email, key);
     }
 };

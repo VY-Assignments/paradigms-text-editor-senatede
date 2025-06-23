@@ -18,6 +18,7 @@ TextEditor::TextEditor(const uint32_t INITIAL_BUFFER_SIZE, const uint32_t INITIA
     String Clipboard;
     TextStateStack UndoStack;
     TextStateStack RedoStack;
+    CaesarCipher::init();
 }
 TextEditor::~TextEditor() {
     cleanup();
@@ -296,4 +297,14 @@ int TextEditor::empty_line() {
     if (row > LastLine) return 1;
     lines[row] = new EmptyLine();
     return 0;
+}
+void TextEditor::encrypt(const int key) {
+    UndoStack.push(lines, RowCount, LastLine);
+    RedoStack.clear();
+    for (int i = 0; i <= LastLine; i++) lines[i]->encrypt(key);
+}
+void TextEditor::decrypt(const int key) {
+    UndoStack.push(lines, RowCount, LastLine);
+    RedoStack.clear();
+    for (int i = 0; i <= LastLine; i++) lines[i]->decrypt(key);
 }

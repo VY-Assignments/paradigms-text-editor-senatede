@@ -16,4 +16,6 @@ public:
     String serialize() override {
         return {};
     }
+    void encrypt(int key) override {}
+    void decrypt(int key) override {}
 };

@@ -12,4 +12,5 @@ add_executable(main
         Program/LineTypes/String.cpp
         Program/History/Text.cpp
         Program/History/TextStateStack.cpp
+        Program/Caesar/CaesarCipher.cpp
 )

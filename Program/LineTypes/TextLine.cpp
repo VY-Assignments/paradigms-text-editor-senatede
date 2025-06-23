@@ -23,6 +23,7 @@ class TextLine final : public Line {
     }
     TextLine(const TextLine& other) {
         len = other.len;
+        TextKeyWord = other.TextKeyWord;
         text = static_cast<char*>(calloc(len + 1, sizeof(char)));
         strcpy(text, other.text);
     }
@@ -30,6 +31,7 @@ class TextLine final : public Line {
         if (this == &other) return *this;
         free(text);
         len = other.len;
+        TextKeyWord = other.TextKeyWord;
         text = static_cast<char*>(calloc(len + 1, sizeof(char)));
         strcpy(text, other.text);
         return *this;
@@ -96,6 +98,14 @@ class TextLine final : public Line {
         strcat(temp, TextKeyWord.c_str());
         strcat(temp, "\n");
         strcat(temp, text);
-        return String(temp);
+        return {temp};
+    }
+    void encrypt(const int key) override {
+        text = CaesarCipher::encrypt(text, key);
+        TextKeyWord = CaesarCipher::encrypt(TextKeyWord, key);
+    }
+    void decrypt(const int key) override {
+        text = CaesarCipher::decrypt(text, key);
+        TextKeyWord = CaesarCipher::decrypt(TextKeyWord, key);
     }
 };

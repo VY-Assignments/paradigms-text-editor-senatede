@@ -119,6 +119,24 @@ int main() {
             case 18:
                 text_editor.print_with_cursor(text_editor.empty_line() ? "No such line.\n" : "Done.\n");
                 break;
+            case 19:
+                text_editor.print_with_cursor("Key: ");
+                if (sscanf(text_editor.console_input(), "%d", &number) != 1 || number < 0) {
+                    printf("Invalid input.\n");
+                    break;
+                }
+                text_editor.encrypt(number);
+                printf("Done.\n");
+                break;
+            case 20:
+                text_editor.print_with_cursor("Key: ");
+                if (sscanf(text_editor.console_input(), "%d", &number) != 1 || number < 0) {
+                    printf("Invalid input.\n");
+                    break;
+                }
+                text_editor.decrypt(number);
+                printf("Done.\n");
+                break;
             case 33:
                 text_editor.print_with_cursor("Choose line and index: ");
                 if (sscanf(text_editor.console_input(), "%d %d", &row, &col) != 2  || row < 0 || col < 0) {

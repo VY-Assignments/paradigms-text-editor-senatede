@@ -33,6 +33,8 @@ public:
     int check_uncheck();
     void add_contact(const String& name, const String& surname, const String& email);
     int empty_line();
+    void encrypt(int key);
+    void decrypt(int key);
 
 private:
     void cleanup() const;

@@ -36,6 +36,12 @@ public:
         strcat(temp, checked ? "1" : "0");
         strcat(temp, "\n");
         strcat(temp, item);
-        return String(temp);
+        return {temp};
+    }
+    void encrypt(const int key) override {
+        item = CaesarCipher::encrypt(item, key);
+    }
+    void decrypt(const int key) override {
+        item = CaesarCipher::decrypt(item, key);
     }
 };
