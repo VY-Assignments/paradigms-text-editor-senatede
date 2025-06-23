@@ -50,8 +50,10 @@ int TextEditor::command_input() const {
 }
 void TextEditor::print_help() {
     printf("Welcome to the Simple Text Editor!\nAvailable commands:\n"
-           " -2 → Help\n"
            " -1 → Exit\n"
+           " -2 → Help\n"
+           " -3 → Next tab\n"
+           " -4 → Previous tab\n"
            " 33 → Set cursor\n"
            "  1 → Append text symbols to the end\n"
            "  2 → Start the new line\n"
@@ -157,7 +159,7 @@ int TextEditor::load_from_file(const String& file_name) {
 
         if (LastLine >= RowCount-1) {
             RowCount *= 2; // doubling the number of lines
-            lines = static_cast<Line **>(realloc(line, RowCount * sizeof(Line *)));
+            lines = static_cast<Line **>(realloc(lines, RowCount * sizeof(Line *)));
         }
         line = get_line(file);
     }

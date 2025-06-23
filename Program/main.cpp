@@ -2,14 +2,38 @@
 
 
 int main() {
-    TextEditor text_editor(256, 10);
+    int tab = 0;
+    int num_tabs = 1;
+    auto** tabs = static_cast<TextEditor **>(calloc(num_tabs, sizeof(TextEditor*)));
+    tabs[tab] = new TextEditor(256, 10);
+
+    system("clear");
+    printf("Current page: %d\n", tab+1);
 
     while (true) {
+        TextEditor& text_editor = *tabs[tab];
         int command = text_editor.command_input();
         system("clear"); // Clearing console
+        printf("Current page: %d\n", tab+1);
         int row, col, number;
 
         switch (command) {
+            case -4:
+                system("clear");
+                if (tab > 0) tab--;
+                else printf("It's the first page\n");
+                printf("Current page: %d\n", tab+1);
+                break;
+            case -3:
+                tab++;
+                if (tab >= num_tabs) {
+                    num_tabs++;
+                    tabs = static_cast<TextEditor **>(realloc(tabs, num_tabs * sizeof(TextEditor*)));
+                    tabs[tab] = new TextEditor(256, 10);
+                }
+                system("clear");
+                printf("Current page: %d\n", tab+1);
+                break;
             case -2: TextEditor::print_help(); break;
             case -1: printf("Exiting.."); return 0;
             case 1:
